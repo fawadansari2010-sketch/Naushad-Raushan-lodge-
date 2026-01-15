@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Naushad Roushan Lodge</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4f46e5">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  margin:0;font-family:system-ui,sans-serif;
+  background:linear-gradient(135deg,#f4f4f5,#e2e8f0);
+  min-height:100vh;transition:.3s;overflow-x:hidden;
+}
+body.dark{background:linear-gradient(135deg,#020617,#0f172a);color:#e5e7eb}
+
+#splash-page {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(135deg, #4f46e5, #1e1b4b);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 2000; color: white; transition: 0.5s ease-out;
+}
+.oval-title {
+  background: rgba(255,255,255,0.1); padding: 20px 50px;
+  border-radius: 100px; border: 1px solid rgba(255,255,255,0.2);
+  font-size: 28px; font-weight: bold; margin-bottom: 40px; text-align: center;
+}
+.go-btn {
+  background: white; color: #4f46e5; padding: 15px 60px;
+  border-radius: 50px; font-size: 20px; font-weight: bold;
+  cursor: pointer; border: none; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+  transition: 0.3s;
+}
+.go-btn:active { transform: scale(0.95); }
+.credit { position: absolute; bottom: 20px; font-size: 14px; opacity: 0.8; }
+
+header{
+  position:sticky;top:0;background:#fff;
+  padding:14px;display:flex;justify-content:space-between;align-items:center;
+  box-shadow:0 2px 10px rgba(0,0,0,.05);z-index:100
+}
+body.dark header{background:#1e293b}
+
+.menu-btn,.add-btn{
+  font-size:24px;padding:8px 14px;border-radius:14px;
+  cursor:pointer;user-select:none; position: relative; overflow: hidden;
+}
+
+#menu{
+  position:fixed;background:#fff;width:260px;
+  padding:12px;border-radius:18px;display:none;
+  z-index:1000;box-shadow:0 12px 30px rgba(0,0,0,.25);
+  right: 10px;
+}
+body.dark #menu{background:#1e293b;border:1px solid #334155}
+
+button{
+  width:100%;padding:12px;margin:6px 0;
+  border:none;border-radius:14px;
+  background:#4f46e5;color:#fff;
+  font-weight:500;cursor:pointer; position: relative; overflow: hidden;
+}
+
+input{
+  width:100%;padding:12px;margin:5px 0;
+  border-radius:12px;border:1px solid #ccc;font-size:16px
+}
+body.dark input{background:#334155;color:#fff;border-color:#475569}
+
+#search{width:calc(100% - 28px);margin:14px;padding:14px;border-radius:18px;border:1px solid #ddd}
+
+.card{background:#fff;margin:10px;padding:14px;border-radius:20px;box-shadow:0 2px 6px rgba(0,0,0,.05); position: relative; overflow: hidden;}
+body.dark .card{background:#1e293b}
+
+.row{display:flex;align-items:center;gap:10px}
+.arrow{cursor:pointer;transition:.3s}
+.arrow.open{transform:rotate(90deg)}
+
+.expand{display:none;margin-top:12px;border-top:1px solid #ddd;padding-top:12px}
+.expand.show{display:block;}
+
+img.photo{width:90px;height:110px;border-radius:12px;object-fit:cover;border:1px solid #ccc;margin-top:10px}
+
+.ripple {
+  position: absolute; background: rgba(255, 255, 255, 0.4);
+  border-radius: 50%; transform: scale(0);
+  animation: ripple-animation 0.6s linear; pointer-events: none;
+}
+@keyframes ripple-animation {
+  to { transform: scale(4); opacity: 0; }
+}
+</style>
+</head>
+
+<body>
+
+<div id="splash-page">
+  <div style="font-size: 18px; margin-bottom: 10px; font-weight: 300;">Fawad Apps</div>
+  <div style="font-size: 12px; margin-bottom: 20px; opacity: 0.7;">A Company of Trust</div>
+  <div class="oval-title">Naushad Raushan Lodge</div>
+  <button class="go-btn" onclick="enterApp()">GO</button>
+  <div class="credit">This app is created by Fawad Ansari</div>
+</div>
+
+<header>
+  <div class="menu-btn" id="menuBtn">⋮</div>
+  <b>Naushad Roushan Lodge</b>
+  <div class="add-btn" onclick="addStudent()">＋</div>
+</header>
+
+<div id="menu">
+  <input type="month" id="monthPicker">
+  <button onclick="changeMonth()">📅 Change Month</button>
+  <button onclick="save()">💾 Save</button>
+  <button onclick="exportBackup()">📤 Export Backup</button>
+  <button onclick="importBackup()">📥 Import Backup</button>
+  <button onclick="toggleDark()">🌙 Dark Mode</button>
+  <input type="file" id="importFile" hidden>
+</div>
+
+<input id="search" placeholder="Search student name..." oninput="render()">
+<div id="list" style="padding-bottom: 50px;"></div>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+
+function enterApp() {
+    document.getElementById('splash-page').style.opacity = '0';
+    document.body.style.overflow = 'auto';
+    setTimeout(() => { document.getElementById('splash-page').style.display = 'none'; }, 500);
+}
+
+document.addEventListener('click', function (e) {
+  const ripple = document.createElement('div');
+  ripple.className = 'ripple';
+  document.body.appendChild(ripple);
+  ripple.style.left = `${e.clientX - 5}px`;
+  ripple.style.top = `${e.clientY - 5}px`;
+  ripple.style.width = '10px'; ripple.style.height = '10px';
+  setTimeout(() => ripple.remove(), 600);
+});
+
+const menu=document.getElementById("menu");
+const menuBtn=document.getElementById("menuBtn");
+const monthPicker=document.getElementById("monthPicker");
+const list=document.getElementById("list");
+const search=document.getElementById("search");
+const importFileInput = document.getElementById("importFile");
+
+let currentMonth=localStorage.getItem("currentMonth")||new Date().toISOString().slice(0,7);
+let data=JSON.parse(localStorage.getItem("data_"+currentMonth)||"[]");
+let dark=localStorage.getItem("dark")==="true";
+
+monthPicker.value=currentMonth;
+if(dark)document.body.classList.add("dark");
+
+function genAdmission(){
+  const key="nr_counter_"+currentMonth;
+  let n=(+localStorage.getItem(key)||0)+1;
+  localStorage.setItem(key,n);
+  return `NR-${currentMonth.replace("-","")}-${String(n).padStart(3,"0")}`;
+}
+
+function save(){
+  localStorage.setItem("currentMonth",currentMonth);
+  localStorage.setItem("data_"+currentMonth,JSON.stringify(data));
+  localStorage.setItem("dark",dark);
+}
+
+function addStudent(){
+  data.push({
+    admissionNo:genAdmission(),
+    name:"", father:"", joinDate:new Date().toISOString().slice(0,10), dob:"",
+    mobile:"", aadhaar:"",
+    vill:"", post:"", pin:"", ps:"", dist:"", parentMob:"",
+    college:"", company:"", class:"", session:"", refName:"", refMob:"",
+    photo:"", open:true
+  });
+  save();render();
+}
+
+function render(){
+  list.innerHTML="";
+  const q=search.value.toLowerCase();
+  data.forEach((s,i)=>{
+    if(q && !s.name.toLowerCase().includes(q))return;
+    list.innerHTML+=`
+    <div class="card">
+      <div class="row">
+        <b>${i+1}</b>
+        <div style="flex:1">
+          <input value="${s.name}" placeholder="Student Name" oninput="u(${i},'name',this.value)">
+          <input value="${s.father||''}" placeholder="Father Name" oninput="u(${i},'father',this.value)">
+        </div>
+        <div class="arrow ${s.open?'open':''}" onclick="t(${i})">▶</div>
+      </div>
+      <div class="expand ${s.open?'show':''}">
+        <small>Admission ID: ${s.admissionNo}</small>
+        <div class="row"><input type="date" value="${s.joinDate}" oninput="u(${i},'joinDate',this.value)">
+        <input placeholder="DOB" value="${s.dob||''}" oninput="u(${i},'dob',this.value)"></div>
+        <div class="row"><input placeholder="Village" value="${s.vill||''}" oninput="u(${i},'vill',this.value)">
+        <input placeholder="Post" value="${s.post||''}" oninput="u(${i},'post',this.value)"></div>
+        <div class="row"><input placeholder="Pin" value="${s.pin||''}" oninput="u(${i},'pin',this.value)">
+        <input placeholder="PS" value="${s.ps||''}" oninput="u(${i},'ps',this.value)"></div>
+        <div class="row"><input placeholder="Dist" value="${s.dist||''}" oninput="u(${i},'dist',this.value)">
+        <input placeholder="Mobile" value="${s.mobile}" oninput="u(${i},'mobile',this.value)"></div>
+        <input placeholder="Parents Mob" value="${s.parentMob||''}" oninput="u(${i},'parentMob',this.value)">
+        <input placeholder="College/Coaching" value="${s.college||''}" oninput="u(${i},'college',this.value)">
+        <div class="row"><input placeholder="Class" value="${s.class||''}" oninput="u(${i},'class',this.value)">
+        <input placeholder="Session" value="${s.session||''}" oninput="u(${i},'session',this.value)"></div>
+        <div class="row"><input placeholder="Ref Name" value="${s.refName||''}" oninput="u(${i},'refName',this.value)">
+        <input placeholder="Ref Mob" value="${s.refMob||''}" oninput="u(${i},'refMob',this.value)"></div>
+        <input placeholder="Aadhaar" value="${s.aadhaar}" oninput="u(${i},'aadhaar',this.value)">
+        <input type="file" accept="image/*" onchange="photo(event,${i})">
+        ${s.photo?`<img src="${s.photo}" class="photo">`:""}
+        <button onclick="studentPDF(${i})">📄 Admission Record</button>
+        <button style="background:#be123c" onclick="del(${i})">Delete</button>
+      </div>
+    </div>`;
+  });
+}
+
+const u=(i,k,v)=>{data[i][k]=v;save()}
+const t=i=>{data[i].open=!data[i].open;render()}
+const del=i=>{if(confirm("Delete?")){data.splice(i,1);save();render()}}
+
+function photo(e,i){
+  const r=new FileReader();
+  r.onload=()=>{data[i].photo=r.result;save();render()}
+  if(e.target.files[0]) r.readAsDataURL(e.target.files[0]);
+}
+
+menuBtn.onclick=e=>{
+  menu.style.display = menu.style.display === "block" ? "none" : "block";
+  const b=menuBtn.getBoundingClientRect();
+  menu.style.top=b.bottom+8+"px";
+  e.stopPropagation();
+};
+window.onclick=e=>{if(!menu.contains(e.target))menu.style.display="none"};
+
+function toggleDark(){dark=!dark;document.body.classList.toggle("dark");save()}
+function changeMonth(){save();currentMonth=monthPicker.value;data=JSON.parse(localStorage.getItem("data_"+currentMonth)||"[]");render();menu.style.display="none"}
+
+function exportBackup(){
+  const blob=new Blob([JSON.stringify({month:currentMonth,data})]);
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download=`Lodge_Backup_${currentMonth}.json`;a.click();
+}
+function importBackup(){importFileInput.click()}
+importFileInput.onchange=e=>{
+  const r=new FileReader();
+  r.onload=()=>{data=JSON.parse(r.result).data||[];save();render()}
+  if(e.target.files[0]) r.readAsText(e.target.files[0]);
+};
+
+async function studentPDF(i){
+  const {jsPDF}=window.jspdf;
+  const s=data[i];
+  const d=new jsPDF();
+  d.setFontSize(22); d.setFont("helvetica", "bold");
+  d.text("NAUSHAD ROSHAN LODGE HAZARIBAGH", 105, 20, {align:"center"});
+  d.setDrawColor(0); d.roundedRect(145, 30, 45, 55, 3, 3);
+  if(s.photo) d.addImage(s.photo, "JPEG", 147, 32, 41, 51);
+  d.setFontSize(11); d.setFont("helvetica", "normal");
+  let y = 45;
+  const line = (txt, val, xLine = 60, lineLen = 130) => {
+    d.text(txt, 20, y);
+    d.setFont("helvetica", "bold");
+    d.text(String(val || ""), xLine + 2, y - 1);
+    d.setFont("helvetica", "normal");
+    d.line(xLine, y, lineLen, y);
+    y += 10;
+  };
+  line("1. Name of Student.", s.name.toUpperCase(), 60);
+  line("2. Father Name.", (s.father || "").toUpperCase(), 60);
+  line("3. Date of Birth.", s.dob, 60);
+  d.text("4. Address.", 20, y); y += 8;
+  d.text("Vill.", 25, y); d.line(35, y, 130, y); d.text(String(s.vill||""), 37, y-1); y+=10;
+  d.text("Post.", 25, y); d.line(35, y, 85, y); d.text(String(s.post||""), 37, y-1);
+  d.text("Pin Code.", 90, y); d.line(108, y, 130, y); d.text(String(s.pin||""), 110, y-1); y+=10;
+  d.text("Ps.", 25, y); d.line(32, y, 85, y); d.text(String(s.ps||""), 34, y-1);
+  d.text("Dist.", 90, y); d.line(100, y, 130, y); d.text(String(s.dist||""), 102, y-1); y+=10;
+  d.text("Mob. No. 1.", 25, y); d.line(50, y, 90, y); d.text(String(s.mobile||""), 52, y-1);
+  d.text("2.", 95, y); d.line(100, y, 130, y); y+=10;
+  line("Parents Mob. No.", s.parentMob, 55);
+  line("5. College/Coaching Name.", s.college, 75);
+  line("6. Company Name. (If Any)", s.company, 75);
+  line("7. Class.", s.class, 40);
+  line("8. Session.", s.session, 45);
+  d.text("9. Reference Name.", 20, y); d.line(60, y, 100, y); d.text(String(s.refName||""), 62, y-1);
+  d.text("Mob. No.", 105, y); d.line(125, y, 160, y); d.text(String(s.refMob||""), 127, y-1); y+=10;
+  line("10.Identity Proof (Aadhar card).", s.aadhaar, 75);
+  line("11.Date of Entry", s.joinDate, 55);
+  y += 5;
+  d.setFont("helvetica", "bold"); d.text("Note: -", 20, y); y += 6;
+  d.setFont("helvetica", "normal"); d.setFontSize(9);
+  const notes = [
+    "From the date you enter the lodge, your month will start from the same date...",
+    "One thing, if the room is booked in your name, if you stay at home...",
+    "If any item of the lodge is damaged, then you will have to pay for it.",
+    "No friend or family member can stay in the room for more than 1 day..."
+  ];
+  notes.forEach(n => { 
+    let split = d.splitTextToSize("• " + n, 170);
+    d.text(split, 20, y); y += (split.length * 5);
+  });
+  y += 15; d.setFontSize(10);
+  d.text("I certify that the information provided is true...", 20, y);
+  y += 25; d.text("Verifier Signature", 20, y); d.text("Signature", 160, y);
+  d.save(`Admission_${s.name}.pdf`);
+}
+render();
+</script>
+</body>
+</html>
