@@ -120,6 +120,7 @@ img.photo{width:90px;height:110px;border-radius:12px;object-fit:cover;border:1px
   <button onclick="exportBackup()">📤 Export Backup</button>
   <button onclick="importBackup()">📥 Import Backup</button>
   <button onclick="toggleDark()">🌙 Dark Mode</button>
+  <button onclick="deleteAll()" style="background:#be123c">🗑️ Delete All Data</button>
   <input type="file" id="importFile" hidden>
 </div>
 
@@ -172,6 +173,7 @@ function save(){
   localStorage.setItem("currentMonth",currentMonth);
   localStorage.setItem("data_"+currentMonth,JSON.stringify(data));
   localStorage.setItem("dark",dark);
+  // Popup removed as requested
 }
 
 function addStudent(){
@@ -206,18 +208,18 @@ function render(){
         <div class="row"><input type="date" value="${s.joinDate}" oninput="u(${i},'joinDate',this.value)">
         <input placeholder="DOB" value="${s.dob||''}" oninput="u(${i},'dob',this.value)"></div>
         <div class="row"><input placeholder="Village" value="${s.vill||''}" oninput="u(${i},'vill',this.value)">
-        <input placeholder="Post" value="${s.post||''}" oninput="u(${i},'post',this.value)"></div>
-        <div class="row"><input placeholder="Pin" value="${s.pin||''}" oninput="u(${i},'pin',this.value)">
-        <input placeholder="PS" value="${s.ps||''}" oninput="u(${i},'ps',this.value)"></div>
-        <div class="row"><input placeholder="Dist" value="${s.dist||''}" oninput="u(${i},'dist',this.value)">
-        <input placeholder="Mobile" value="${s.mobile}" oninput="u(${i},'mobile',this.value)"></div>
-        <input placeholder="Parents Mob" value="${s.parentMob||''}" oninput="u(${i},'parentMob',this.value)">
-        <input placeholder="College/Coaching" value="${s.college||''}" oninput="u(${i},'college',this.value)">
-        <div class="row"><input placeholder="Class" value="${s.class||''}" oninput="u(${i},'class',this.value)">
-        <input placeholder="Session" value="${s.session||''}" oninput="u(${i},'session',this.value)"></div>
-        <div class="row"><input placeholder="Ref Name" value="${s.refName||''}" oninput="u(${i},'refName',this.value)">
-        <input placeholder="Ref Mob" value="${s.refMob||''}" oninput="u(${i},'refMob',this.value)"></div>
-        <input placeholder="Aadhaar" value="${s.aadhaar}" oninput="u(${i},'aadhaar',this.value)">
+        <input placeholder="Post" value="${s.post||''}" oninput=\"u(${i},'post',this.value)\"></div>
+        <div class="row"><input placeholder="Pin" value="${s.pin||''}" oninput=\"u(${i},'pin',this.value)\">
+        <input placeholder="PS" value="${s.ps||''}" oninput=\"u(${i},'ps',this.value)\"></div>
+        <div class="row"><input placeholder="Dist" value="${s.dist||''}" oninput=\"u(${i},'dist',this.value)\">
+        <input placeholder="Mobile" value="${s.mobile}" oninput=\"u(${i},'mobile',this.value)\"></div>
+        <input placeholder="Parents Mob" value="${s.parentMob||''}" oninput=\"u(${i},'parentMob',this.value)\">
+        <input placeholder="College/Coaching" value="${s.college||''}" oninput=\"u(${i},'college',this.value)\">
+        <div class="row"><input placeholder="Class" value="${s.class||''}" oninput=\"u(${i},'class',this.value)\">
+        <input placeholder="Session" value="${s.session||''}" oninput=\"u(${i},'session',this.value)\"></div>
+        <div class="row"><input placeholder="Ref Name" value="${s.refName||''}" oninput=\"u(${i},'refName',this.value)\">
+        <input placeholder="Ref Mob" value="${s.refMob||''}" oninput=\"u(${i},'refMob',this.value)\"></div>
+        <input placeholder="Aadhaar" value="${s.aadhaar}" oninput=\"u(${i},'aadhaar',this.value)\">
         <input type="file" accept="image/*" onchange="photo(event,${i})">
         ${s.photo?`<img src="${s.photo}" class="photo">`:""}
         <button onclick="studentPDF(${i})">📄 Admission Record</button>
@@ -229,7 +231,21 @@ function render(){
 
 const u=(i,k,v)=>{data[i][k]=v;save()}
 const t=i=>{data[i].open=!data[i].open;render()}
-const del=i=>{if(confirm("Delete?")){data.splice(i,1);save();render()}}
+
+// Popup removed from delete single item
+const del=i=>{
+  data.splice(i,1);
+  save();
+  render();
+}
+
+// Function to delete all data for current month (No popup)
+function deleteAll(){
+  data = [];
+  save();
+  render();
+  menu.style.display="none";
+}
 
 function photo(e,i){
   const r=new FileReader();
